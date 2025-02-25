@@ -1,21 +1,4 @@
-local library = loadstring(game:GetObjects("rbxassetid://7657867786")[1].Source)()
-local Wait = library.subs.Wait -- Only returns if the GUI has not been terminated. For 'while Wait() do' loops
-
-local PepsisWorld = library:CreateWindow({
-    Name = "Pepsi's World",
-    Themeable = {
-        Info = "Discord Server: VzYTJ7Y"
-    }
-})
-
-local GeneralTab = PepsisWorld:CreateTab({
-    Name = "General"
-})
-
-local PlayerSection = GeneralTab:CreateSection({
-    Name = "Player Controls"
-})
-
+-- Rune Slayer - Basic - Made by toto
 local player = game:GetService("Players").LocalPlayer
 local userInput = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
@@ -32,84 +15,87 @@ local jumpKey = Enum.KeyCode.Space
 local noclipKey = Enum.KeyCode.V
 
 local platformLifetime = 0.5
-local character, rootPart, humanoid
 
--- Function to update character references
-local function updateCharacter(newCharacter)
-    character = newCharacter
-    rootPart = character:WaitForChild("HumanoidRootPart")
-    humanoid = character:WaitForChild("Humanoid")
+local function resetCharacterFunctions(character)
+    -- Wait for necessary parts
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
 
-    -- Reapply active features
-    if antiFall then monitorFall() end
-    if infiniteJump then enableInfiniteJump() end
-    if noclip then setNoClip(true) end
+    -- Re-enable NoClip for new character
+    setNoClip(noclip)
+
+    -- Monitor fall again
+    monitorFall()
+
+    -- Enable infinite jump again
+    if infiniteJump then
+        enableInfiniteJump()
+    end
+
+    -- Handle WalkSpeed again
+    if enabled then
+        moveCharacter()
+    end
 end
 
--- Monitor respawn
-player.CharacterAdded:Connect(updateCharacter)
-updateCharacter(player.Character or player.CharacterAdded:Wait())
+-- GUI Creation
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui
 
--- WalkSpeed Toggle
-PlayerSection:AddToggle({
-    Name = "Enable Walkspeed",
-    Flag = "PlayerSection_WalkSpeed",
-    Callback = function(Value)
-        enabled = Value
-        if enabled then
-            moveCharacter()
-        end
-    end
-})
+local Frame = Instance.new("Frame")
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.Position = UDim2.new(0.3, 0, 0.3, 0)
+Frame.Size = UDim2.new(0, 350, 0, 300)
+Frame.Active = true
+Frame.Draggable = true
+Frame.BorderSizePixel = 0
+Frame.ClipsDescendants = true
 
--- Anti-Fall Toggle
-PlayerSection:AddToggle({
-    Name = "Enable Anti-Fall",
-    Flag = "PlayerSection_AntiFall",
-    Callback = function(Value)
-        antiFall = Value
-        if antiFall then
-            monitorFall()
-        end
-    end
-})
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Parent = Frame
+ScrollingFrame.Position = UDim2.new(0, 0, 0.1, 0)
+ScrollingFrame.Size = UDim2.new(1, 0, 1, -30)
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 500)
+ScrollingFrame.ScrollBarThickness = 8
+ScrollingFrame.BackgroundTransparency = 1
 
--- Infinite Jump Toggle
-PlayerSection:AddToggle({
-    Name = "Enable Infinite Jump",
-    Flag = "PlayerSection_InfiniteJump",
-    Callback = function(Value)
-        infiniteJump = Value
-        if infiniteJump then
-            enableInfiniteJump()
-        end
-    end
-})
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = ScrollingFrame
+UIListLayout.FillDirection = Enum.FillDirection.Vertical
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 5)
 
--- NoClip Toggle
-PlayerSection:AddToggle({
-    Name = "Enable NoClip",
-    Flag = "PlayerSection_NoClip",
-    Callback = function(Value)
-        setNoClip(Value)
-    end
-})
+local Title = Instance.new("TextLabel")
+Title.Parent = Frame
+Title.Text = "Rune Slayer - Basic - Made by Totonio"
+Title.Size = UDim2.new(1, 0, 0.1, 0)
+Title.BackgroundTransparency = 1
+Title.TextScaled = true
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSans
 
--- Keybinds for Walkspeed, Anti-Fall, Infinite Jump, NoClip
-game:GetService("UserInputService").InputBegan:Connect(function(input)
-    if input.KeyCode == walkSpeedKey then
-        PlayerSection.Flags["PlayerSection_WalkSpeed"].Callback(not enabled)
-    elseif input.KeyCode == antiFallKey then
-        PlayerSection.Flags["PlayerSection_AntiFall"].Callback(not antiFall)
-    elseif input.KeyCode == jumpKey then
-        PlayerSection.Flags["PlayerSection_InfiniteJump"].Callback(not infiniteJump)
-    elseif input.KeyCode == noclipKey then
-        PlayerSection.Flags["PlayerSection_NoClip"].Callback(not noclip)
-    end
-end)
+-- Button Creation Function
+local function createButton(text, parent)
+    local button = Instance.new("TextButton")
+    button.Parent = parent
+    button.Text = text
+    button.Size = UDim2.new(1, 0, 0.2, 0)
+    button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.SourceSans
+    button.TextScaled = true
+    return button
+end
+
+-- Create buttons
+local ToggleButton = createButton("Enable Walkspeed", ScrollingFrame)
+local AntiFallButton = createButton("Enable Anti-Fall", ScrollingFrame)
+local InfiniteJumpButton = createButton("Enable Infinite Jump", ScrollingFrame)
+local NoClipButton = createButton("Enable NoClip", ScrollingFrame)
 
 -- Platform Creation for Infinite Jump
-local function createInvisiblePlatform()
+local function createInvisiblePlatform(rootPart)
     local platform = Instance.new("Part")
     platform.Size = Vector3.new(4, 1, 4)
     platform.Position = rootPart.Position - Vector3.new(0, 3, 0)
@@ -123,17 +109,21 @@ end
 -- Fixed Infinite Jump
 local function enableInfiniteJump()
     game:GetService("UserInputService").JumpRequest:Connect(function()
-        if infiniteJump and rootPart then
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            createInvisiblePlatform()
+        if infiniteJump then
+            local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                createInvisiblePlatform(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"))
+            end
         end
     end)
 end
 
 -- Improved Anti-Fall (Slows Falling Velocity)
 local function monitorFall()
+    local rootPart = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
     runService.Stepped:Connect(function()
-        if antiFall and rootPart then
+        if antiFall then
             local velocity = rootPart.Velocity
             if velocity.Y < -10 then -- Only slow falling
                 rootPart.Velocity = Vector3.new(velocity.X, -5, velocity.Z)
@@ -145,12 +135,20 @@ end
 -- NoClip Toggle
 local function setNoClip(state)
     noclip = state
+    NoClipButton.Text = noclip and "Disable NoClip" or "Enable NoClip" -- Update button text
 
     local function noClipStep()
-        if noclip and character then
-            for _, part in pairs(character:GetDescendants()) do
+        if noclip then
+            for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
                 if part:IsA("BasePart") and part.CanCollide then
                     part.CanCollide = false
+                end
+            end
+        else
+            -- Restore collision when noclip is off
+            for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
                 end
             end
         end
@@ -159,7 +157,8 @@ local function setNoClip(state)
     if noclip then
         runService.Stepped:Connect(noClipStep)
     else
-        for _, part in pairs(character:GetDescendants()) do
+        -- Ensure no-clip state is correctly reset
+        for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") then
                 part.CanCollide = true
             end
@@ -171,11 +170,13 @@ end
 local function moveCharacter()
     local connection
     connection = runService.RenderStepped:Connect(function()
-        if not enabled or not rootPart then
+        local character = game.Players.LocalPlayer.Character
+        if not enabled or not character then
             connection:Disconnect()
             return
         end
 
+        local rootPart = character:WaitForChild("HumanoidRootPart")
         local moveDirection = Vector3.new(0, 0, 0)
         if userInput:IsKeyDown(Enum.KeyCode.W) then
             moveDirection = moveDirection + (workspace.CurrentCamera.CFrame.LookVector * speed * 0.05)
@@ -193,5 +194,48 @@ local function moveCharacter()
     end)
 end
 
--- Wait for the GUI to be active
-Wait()  -- This ensures the script continues running as long as the GUI is active
+-- Button Click Events
+ToggleButton.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    ToggleButton.Text = enabled and "Disable Walkspeed" or "Enable Walkspeed"
+    moveCharacter()
+end)
+
+AntiFallButton.MouseButton1Click:Connect(function()
+    antiFall = not antiFall
+    AntiFallButton.Text = antiFall and "Disable Anti-Fall" or "Enable Anti-Fall"
+end)
+
+InfiniteJumpButton.MouseButton1Click:Connect(function()
+    infiniteJump = not infiniteJump
+    InfiniteJumpButton.Text = infiniteJump and "Disable Infinite Jump" or "Enable Infinite Jump"
+    if infiniteJump then
+        enableInfiniteJump()
+    end
+end)
+
+NoClipButton.MouseButton1Click:Connect(function()
+    noclip = not noclip
+    setNoClip(noclip)
+end)
+
+-- Keybinds
+userInput.InputBegan:Connect(function(input)
+    if input.KeyCode == walkSpeedKey then
+        ToggleButton.MouseButton1Click()
+    elseif input.KeyCode == antiFallKey then
+        AntiFallButton.MouseButton1Click()
+    elseif input.KeyCode == jumpKey then
+        InfiniteJumpButton.MouseButton1Click()
+    elseif input.KeyCode == noclipKey then
+        NoClipButton.MouseButton1Click()
+    end
+end)
+
+-- Handle character respawn
+player.CharacterAdded:Connect(function(character)
+    -- Reset the functions on respawn
+    resetCharacterFunctions(character)
+end)
+
+monitorFall() -- Start Anti-Fall monitoring
